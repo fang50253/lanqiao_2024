@@ -1,0 +1,94 @@
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#define max_in 8
+typedef struct 
+{
+    char type;
+    char plate[5];
+    int time_in;
+    int lot_index;
+}Car;
+void display_parking_state(Car park_[])
+{
+    for (int i = 0; i < max_in; ++i) {
+        if (park_[i].type != '\0') {
+            printf("1");
+        } else {
+            printf("0");
+        }
+    }
+    printf("\n");
+}
+double calculate_fee(int minutes)
+{
+    int hours = (minutes + 59) / 60;  // Round up to the nearest hour
+    return hours * 0.7;
+}
+int main()
+{
+    Car park_[max_in] = {0};  // Parking lot state
+    Car cars[1000];  // Stores cars information
+    int car_count = 0;
+    while (1)
+    {
+        char input[20];
+        printf("请输入车辆信息编号（输入 'exit' 退出）：");
+        scanf("%s", input);
+        if (strcmp(input, "exit") == 0) break;
+        char car_type = input[0];
+        char car_plate[5];
+        int time;
+        strncpy(car_plate, input + 1, 4);
+        car_plate[4] = '\0';
+        scanf(input + 5, "%d", &time);
+        int lot_range_start = (car_type == 'S') ? 0 : 5;
+        int lot_range_end = (car_type == 'S') ? 5 : 8;
+        int park_i = -1;
+        for (int i = 0; i < car_count; ++i)
+        {
+            if (cars[i].type == car_type && strcmp(cars[i].plate, car_plate) == 0)
+            {
+                park_i = i;
+                break;
+            }
+        }
+        if (park_i != -1)
+        {
+            int lot_index = cars[park_i].lot_index;
+            int time_in = cars[park_i].time_in;
+            park_[lot_index].type = '\0';
+            park_[lot_index].plate[0] = '\0';
+            park_[lot_index].time_in = 0;
+            park_[lot_index].lot_index = -1;
+            int minutes_parked = ((time / 100) * 60 + (time % 100)) - ((time_in / 100) * 60 + (time_in % 100));
+            double fee = calculate_fee(minutes_parked);
+            printf("%c%s 共停车 %d 小时 %d 分钟，收费 %.1f 元\n", car_type, car_plate, minutes_parked / 60, minutes_parked % 60, fee);
+        } else
+        {
+            int parked = 0;
+            for (int i = lot_range_start; i < lot_range_end; ++i)
+            {
+                if (park_[i].type == '\0')
+                {
+                    park_[i].type = car_type;
+                    strcpy(park_[i].plate, car_plate);
+                    park_[i].time_in = time;
+                    park_[i].lot_index = i;
+                    cars[car_count].type = car_type;
+                    strcpy(cars[car_count].plate, car_plate);
+                    cars[car_count].time_in = time;
+                    cars[car_count].lot_index = i;
+                    car_count++;
+                    printf("车辆 %c%s 停入 %d 号车位\n", car_type, car_plate, i + 1);
+                    parked = 1;
+                    break;
+                }
+            }
+            if (!parked) printf("%s 停车位已满\n", car_type == 'S' ? "小型" : "大型");
+        }
+        printf("停车场状态: ");
+        display_parking_state(park_);
+    }
+    return 0;
+}
